@@ -1,6 +1,6 @@
 CC = cc
 CFALGS = -Wall -Wextra -Werror
-SRCS = src/philosophers.c src/ft_atoi.c
+SRCS = src/philosophers.c src/ft_atoi.c src/init.c src/log.c
 OBJS = $(SRCS:.c=.o)
 NAME = philo
 all: $(NAME)

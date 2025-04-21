@@ -33,7 +33,9 @@ int create_philos(t_philo *philos)
 int main(int ac, char **av)
 {
     t_philo philos;
+    t_data data;
 
+    memset(&philos, 0, sizeof(t_philo));
     if (ac != 5 && ac != 6)
     {
         printf("Error: Wrong number of arguments\n");
@@ -54,7 +56,9 @@ int main(int ac, char **av)
     }
     else
         philos.num_of_times_must_eat = -1;
+    if (init_mutex(data) != 0)
+        return (1);
+    data.philos = &philos;
     printf("create return %d\n",create_philos(&philos));
     printf("Number of philosophers: %d\n", philos.num_of_philosophers);
-
 }

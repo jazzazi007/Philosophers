@@ -14,8 +14,23 @@ typedef struct s_philo
     int		time_to_die;
     int		num_of_philosophers;
     int		num_of_times_must_eat;
+    int     print;
+    int     *forks;
 }	t_philo;
 
+typedef struct s_data
+{
+    t_philo    *philos;
+    //pthread_t   *threads;
+    pthread_mutex_t *mutex;
+} t_data;
+
 int	ft_atoi(const char *str);
+int init_mutex(t_data *data);
+void eating(t_data *data);
+void sleeping(t_data *data);
+void thinking(t_data *data);
+void died(t_data *data);
+void forks(t_data *data);
 
 #endif
