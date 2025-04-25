@@ -1,47 +1,33 @@
 #include "../include/philosophers.h"
 
-void* myThreadFunc() {
-    while(1) {
-        printf("Thread is running...\n");
-        sleep(1);
-    }
-    return NULL;
-}
-
-int create_philos(t_philo *philos)
-{
-    pthread_t *threads;
-    int i;
-
-    i = 0;
-    threads = malloc(sizeof(pthread_t) * philos->num_of_philosophers);
-    if (!threads)
-        return (1);
-    while(i < philos->num_of_philosophers)
-    {
-        if (pthread_create(&threads[i], NULL, myThreadFunc, NULL) != 0)
-        {
-            free(threads);
-            return (1);
-        }
-        printf("Philosopher %d created\n", i);
-        i++;
-    }
-    return (0);
-}
-
 int main(int ac, char **av)
 {
     t_philo philos;
     t_data data;
+    int i = 1;
+    int j = 0;
 
-    memset(&philos, 0, sizeof(t_philo));
+    memset(&philos, 0, sizeof(philos));
+    memset(&data, 0, sizeof(data));
+    while (av[++i])
+    {
+        j = 0;
+        while (av[i][j])
+        {
+            if (ft_isdigit(av[i][j++]) == 0)
+            {
+                printf("Error: Argument is not a number\n");
+                return (1);
+            }
+        }
+    }
     if (ac != 5 && ac != 6)
     {
         printf("Error: Wrong number of arguments\n");
         return (1);
     }
     philos.num_of_philosophers = ft_atoi(av[1]);
+    printf("philos.num_of_philosophers = %d\n", philos.num_of_philosophers);
     philos.time_to_die = ft_atoi(av[2]);
     philos.time_to_eat = ft_atoi(av[3]);
     philos.time_to_sleep = ft_atoi(av[4]);
@@ -56,9 +42,16 @@ int main(int ac, char **av)
     }
     else
         philos.num_of_times_must_eat = -1;
-    if (init_mutex(data) != 0)
+    if (init_mutex(&data) != 0)
         return (1);
     data.philos = &philos;
-    printf("create return %d\n",create_philos(&philos));
+    printf("create return %d\n",init_philos(&data));
+    /* int m = 0;
+    while (1)
+    {
+        printf("TIME %d is running...\n", get_time());
+        m++;
+    } */
+    mutex_destroy(&data);
     printf("Number of philosophers: %d\n", philos.num_of_philosophers);
 }

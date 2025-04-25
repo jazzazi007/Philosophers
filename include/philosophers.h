@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
+#include <sys/time.h>
 
 typedef struct s_philo
 {
@@ -18,19 +20,26 @@ typedef struct s_philo
     int     *forks;
 }	t_philo;
 
+
+
 typedef struct s_data
 {
     t_philo    *philos;
     //pthread_t   *threads;
-    pthread_mutex_t *mutex;
+    pthread_mutex_t mutex;
 } t_data;
 
+int init_philos(t_data *data);
 int	ft_atoi(const char *str);
 int init_mutex(t_data *data);
+int	ft_isdigit(int c);
 void eating(t_data *data);
 void sleeping(t_data *data);
 void thinking(t_data *data);
 void died(t_data *data);
 void forks(t_data *data);
+int get_time(void);
+int mutex_destroy(t_data *data);
+
 
 #endif
