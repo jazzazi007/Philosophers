@@ -27,7 +27,6 @@ int main(int ac, char **av)
         return (1);
     }
     philos.num_of_philosophers = ft_atoi(av[1]);
-    printf("philos.num_of_philosophers = %d\n", philos.num_of_philosophers);
     philos.time_to_die = ft_atoi(av[2]);
     philos.time_to_eat = ft_atoi(av[3]);
     philos.time_to_sleep = ft_atoi(av[4]);
@@ -42,16 +41,17 @@ int main(int ac, char **av)
     }
     else
         philos.num_of_times_must_eat = -1;
+    data.philos = &philos;
     if (init_mutex(&data) != 0)
         return (1);
-    data.philos = &philos;
     printf("create return %d\n",init_philos(&data));
     /* int m = 0;
     while (1)
     {
-        printf("TIME %d is running...\n", get_time());
         m++;
     } */
+    while (j < philos.num_of_philosophers)
+        pthread_join(data.threads[j++], NULL);
     mutex_destroy(&data);
     printf("Number of philosophers: %d\n", philos.num_of_philosophers);
 }
