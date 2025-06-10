@@ -1,6 +1,6 @@
 #include "../include/philosophers.h"
 
-void* myThreadFunc(void *arg) {
+void* philo_active(void *arg) {
     t_data *data = (t_data *)arg;
     t_philo *philos = data->philos;
     //int num_of_philosophers = philos->num_of_philosophers;
@@ -14,19 +14,6 @@ void* myThreadFunc(void *arg) {
     return NULL;
 }
 
-void* myThreadFunc2(void *arg) {
-    t_data *data = (t_data *)arg;
-    t_philo *philos = data->philos;
-   // int num_of_philosophers = philos->num_of_philosophers;
-    while(1) {
-        pthread_mutex_lock(&data->mutex);
-        printf("Thread 2 is running...\n");
-        printf("philo %d\n", philos->id);
-        pthread_mutex_unlock(&data->mutex);
-        sleep(1);
-    }
-    return NULL;
-}
 int init_mutex(t_data *data)
 {
     if (pthread_mutex_init(&data->mutex, NULL) != 0)
@@ -56,23 +43,13 @@ int init_philos(t_data *data)
     data->threads = malloc(sizeof(pthread_t) * data->philos->num_of_philosophers);
     if (!data->threads)
         return (1);
+    forks_init(data->philos); // Initialize forks for each philosopher
     while(i < data->philos->num_of_philosophers)
     {
-        if (i % 2 == 0)
+        if (pthread_create(&data->threads[i], NULL, philo_active, data) != 0)
         {
-            if (pthread_create(&data->threads[i], NULL, myThreadFunc, data) != 0)
-            {
-                free(data->threads);
-                return (1);
-            }
-        }
-        else
-        {
-            if (pthread_create(&data->threads[i], NULL, myThreadFunc2, data) != 0)
-            {
-                free(data->threads);
-                return (1);
-            }
+            free(data->threads);
+            return (1);
         }
         printf("Philosopher %d created\n", i);
         printf("i ID: %d\n", i);

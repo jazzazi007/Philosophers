@@ -40,6 +40,7 @@ void died(t_data *data);
 void forks(t_data *data);
 int get_time(void);
 int mutex_destroy(t_data *data);
+void forks_init(t_philo *philos);
 
 
 #endif

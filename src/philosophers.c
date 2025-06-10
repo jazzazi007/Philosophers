@@ -44,6 +44,7 @@ int main(int ac, char **av)
     data.philos = &philos;
     if (init_mutex(&data) != 0)
         return (1);
+    
     printf("create return %d\n",init_philos(&data));
     /* int m = 0;
     while (1)
