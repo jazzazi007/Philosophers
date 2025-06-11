@@ -41,6 +41,7 @@ void forks(t_data *data);
 int get_time(void);
 int mutex_destroy(t_data *data);
 void forks_init(t_philo *philos);
+void process_philo(t_data *data);
 
 
 #endif

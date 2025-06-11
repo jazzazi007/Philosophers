@@ -2,13 +2,14 @@
 
 void* philo_active(void *arg) {
     t_data *data = (t_data *)arg;
-    t_philo *philos = data->philos;
+   // t_philo *philos = data->philos;
     //int num_of_philosophers = philos->num_of_philosophers;
     while(1) {
-        pthread_mutex_lock(&data->mutex);
+        process_philo(data);
+        /*pthread_mutex_lock(&data->mutex);
         printf("Thread 1 is running...\n");
         printf("philo %d\n", philos->id);
-        pthread_mutex_unlock(&data->mutex);
+        pthread_mutex_unlock(&data->mutex);*/
         sleep(1);
     }
     return NULL;

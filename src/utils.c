@@ -17,3 +17,17 @@ void forks_init(t_philo *philos)
         philos->forks[i++] = 0;
     }
 }
+
+void process_philo(t_data *data)
+{
+    t_philo *philo = data->philos;
+
+    pthread_mutex_lock(&data->mutex);
+    printf("Philosopher %d is eating\n", philo->id);
+    usleep(philo->time_to_eat * 1000); // Simulate eating time
+    pthread_mutex_unlock(&data->mutex);
+    printf("Philosopher %d finished eating\n", philo->id);
+    usleep(philo->time_to_sleep * 1000); // Simulate sleeping time
+    printf("Philosopher %d is thinking\n", philo->id);
+    usleep(philo->time_to_sleep * 1000); // Simulate thinking time
+}
