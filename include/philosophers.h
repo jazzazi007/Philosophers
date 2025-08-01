@@ -20,14 +20,22 @@ typedef struct s_philo
     int     *forks;
 }	t_philo;
 
-
-
 typedef struct s_data
 {
     t_philo    *philos;
     pthread_t   *threads;
     pthread_mutex_t mutex;
 } t_data;
+
+typedef enum e_status
+{
+	DIED = 0,
+	EATING = 1,
+	SLEEPING = 2,
+	THINKING = 3,
+	GOT_FORK_1 = 4,
+	GOT_FORK_2 = 5
+}	t_status;
 
 int init_philos(t_data *data);
 int	ft_atoi(const char *str);
@@ -38,7 +46,7 @@ void sleeping(t_data *data);
 void thinking(t_data *data);
 void died(t_data *data);
 void forks(t_data *data);
-int get_time(void);
+time_t get_time_ms(void);
 int mutex_destroy(t_data *data);
 void forks_init(t_philo *philos);
 void process_philo(t_data *data);

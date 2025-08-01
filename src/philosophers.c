@@ -46,11 +46,6 @@ int main(int ac, char **av)
         return (1);
     
     printf("create return %d\n",init_philos(&data));
-    /* int m = 0;
-    while (1)
-    {
-        m++;
-    } */
     while (j < philos.num_of_philosophers)
         pthread_join(data.threads[j++], NULL);
     mutex_destroy(&data);

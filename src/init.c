@@ -47,7 +47,7 @@ int init_philos(t_data *data)
     forks_init(data->philos); // Initialize forks for each philosopher
     while(i < data->philos->num_of_philosophers)
     {
-        if (pthread_create(&data->threads[i], NULL, philo_active, data) != 0)
+        if (pthread_create(&data->threads[i], NULL, &philo_active, data) != 0)
         {
             free(data->threads);
             return (1);
