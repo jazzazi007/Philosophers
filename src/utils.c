@@ -1,33 +1,44 @@
 #include "../include/philosophers.h"
-
-void forks_init(t_philo *philos)
+void	error_message(char *text, int signal)
 {
-    int i;
-
-    philos->forks = (int *) malloc(sizeof(int) * philos->num_of_philosophers);
-    if (!philos->forks)
-    {
-        printf("Error: Forks allocation failed\n");
-        exit(1);
-    }
-    i = 0;
-    while (i < philos->num_of_philosophers)
-    {
-        printf("Forks[%d] initialized\n", i);
-        philos->forks[i++] = 0;
-    }
+	if (text)
+		write(2, text, ft_strlen(text) + 1);
+	exit(signal);
 }
 
-void process_philo(t_data *data)
+void	destroy_all(t_engine *engine, char *str, int count, int signal)
 {
-    t_philo *philo = data->philos;
+	while (--count >= 0)
+		pthread_mutex_destroy(&engine->forks[count]);
+	pthread_mutex_destroy(&engine->write_lock);
+	pthread_mutex_destroy(&engine->meal_lock);
+	error_message(str, signal);
+}
 
-    pthread_mutex_lock(&data->mutex);
-    printf("Philosopher %d is eating\n", philo->id);
-    usleep(philo->time_to_eat * 1000); // Simulate eating time
-    pthread_mutex_unlock(&data->mutex);
-    printf("Philosopher %d finished eating\n", philo->id);
-    usleep(philo->time_to_sleep * 1000); // Simulate sleeping time
-    printf("Philosopher %d is thinking\n", philo->id);
-    usleep(philo->time_to_sleep * 1000); // Simulate thinking time
+void	print_action(t_philo *philo, char *action)
+{
+	size_t	time;
+
+	pthread_mutex_lock(philo->mutexes.write_lock);
+	time = get_current_time() - philo->times.born_time;
+	printf(GREEN"%ld"RESET" %d%s\n", time, philo->id, action);
+	pthread_mutex_unlock(philo->mutexes.write_lock);
+}
+
+size_t	get_current_time(void)
+{
+	t_timeval	time;
+
+	if (gettimeofday(&time, NULL) == -1)
+		error_message("[gettimeofday ERROR]\n", 1);
+	return (time.tv_sec * 1000 + time.tv_usec / 1000);
+}
+
+void	ft_usleep(size_t mls)
+{
+	size_t	start;
+
+	start = get_current_time();
+	while (get_current_time() - start < mls)
+		usleep(500);
 }

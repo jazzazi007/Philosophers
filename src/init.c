@@ -1,60 +1,57 @@
 #include "../include/philosophers.h"
 
-void* philo_active(void *arg) {
-    t_data *data = (t_data *)arg;
-   // t_philo *philos = data->philos;
-    //int num_of_philosophers = philos->num_of_philosophers;
-    while(1) {
-        process_philo(data);
-        /*pthread_mutex_lock(&data->mutex);
-        printf("Thread 1 is running...\n");
-        printf("philo %d\n", philos->id);
-        pthread_mutex_unlock(&data->mutex);*/
-        sleep(1);
-    }
-    return NULL;
+void	init_philos(t_engine *en, t_philo *philos, t_mutex *forks, char **argv)
+{
+	int	i;
+	int	philo_count;
+
+	if (!en || !philos || !forks || !argv)
+		return;
+
+	philo_count = ft_atoi(argv[1]);
+	i = -1;
+	while (++i < philo_count)
+	{
+		philos[i] = (t_philo){0}; // Zero initialize structure
+		philos[i].id = i + 1;
+		philos[i].times.die = ft_atoi(argv[2]);
+		philos[i].times.eat = ft_atoi(argv[3]);
+		philos[i].times.sleep = ft_atoi(argv[4]);
+		philos[i].times.last_meal = get_current_time();
+		philos[i].times.born_time = get_current_time();
+		philos[i].must_eat = argv[5] ? ft_atoi(argv[5]) : -1;
+		philos[i].philo_count = philo_count;
+
+		// Fork assignment with boundary checking
+		philos[i].mutexes.left_fork = &forks[i];
+		philos[i].mutexes.right_fork = &forks[(i + 1) % philo_count];
+		philos[i].mutexes.write_lock = &en->write_lock;
+		philos[i].mutexes.meal_lock = &en->meal_lock;
+	}
 }
 
-int init_mutex(t_data *data)
+void	init_forks(t_engine *engine, t_mutex *forks, int count)
 {
-    if (pthread_mutex_init(&data->mutex, NULL) != 0)
-    {
-        printf("Error: Mutex initialization failed\n");
-        return (1);
-    }
-    return (0);
+	int	i;
+
+	if (!engine || !forks || count <= 0)
+		return;
+
+	for (i = 0; i < count; i++)
+	{
+		if (pthread_mutex_init(&forks[i], NULL) != 0)
+		{
+			destroy_all(engine, "[Mutex Init ERROR]\n", i, 1);
+			return;
+		}
+	}
 }
 
-int mutex_destroy(t_data *data)
+void	init_engine(t_engine *engine, t_philo *philos, t_mutex *forks)
 {
-    if (pthread_mutex_destroy(&data->mutex) != 0)
-    {
-        printf("Error: Mutex destruction failed\n");
-        return (1);
-    }
-    printf("Mutex destroyed successfully\n");
-    return (0);
-}
-
-int init_philos(t_data *data)
-{
-    int i;
-
-    i = 0;
-    data->threads = malloc(sizeof(pthread_t) * data->philos->num_of_philosophers);
-    if (!data->threads)
-        return (1);
-    forks_init(data->philos); // Initialize forks for each philosopher
-    while(i < data->philos->num_of_philosophers)
-    {
-        if (pthread_create(&data->threads[i], NULL, &philo_active, data) != 0)
-        {
-            free(data->threads);
-            return (1);
-        }
-        printf("Philosopher %d created\n", i);
-        printf("i ID: %d\n", i);
-        i++;
-    }
-    return (0);
+	engine->forks = forks;
+	engine->philos = philos;
+	if (pthread_mutex_init(&engine->write_lock, NULL) != 0
+		|| pthread_mutex_init(&engine->meal_lock, NULL) != 0)
+		destroy_all(engine, "[Mutex Init ERROR]\n", -1, 1);
 }

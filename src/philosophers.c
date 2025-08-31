@@ -1,53 +1,36 @@
 #include "../include/philosophers.h"
 
-int main(int ac, char **av)
+void	check_args(int argc, char **argv)
 {
-    t_philo philos;
-    t_data data;
-    int i = 1;
-    int j = 0;
+	int		i;
+	long	num;
 
-    memset(&philos, 0, sizeof(philos));
-    memset(&data, 0, sizeof(data));
-    while (av[++i])
-    {
-        j = 0;
-        while (av[i][j])
-        {
-            if (ft_isdigit(av[i][j++]) == 0)
-            {
-                printf("Error: Argument is not a number\n");
-                return (1);
-            }
-        }
-    }
-    if (ac != 5 && ac != 6)
-    {
-        printf("Error: Wrong number of arguments\n");
-        return (1);
-    }
-    philos.num_of_philosophers = ft_atoi(av[1]);
-    philos.time_to_die = ft_atoi(av[2]);
-    philos.time_to_eat = ft_atoi(av[3]);
-    philos.time_to_sleep = ft_atoi(av[4]);
-    if (ac == 6)
-    {
-        philos.num_of_times_must_eat = ft_atoi(av[5]);
-        if (philos.num_of_times_must_eat <= 0)
-        {
-            printf("Error: Number of philosophers must be positive\n");
-            return (1);
-        }
-    }
-    else
-        philos.num_of_times_must_eat = -1;
-    data.philos = &philos;
-    if (init_mutex(&data) != 0)
-        return (1);
-    
-    printf("create return %d\n",init_philos(&data));
-    while (j < philos.num_of_philosophers)
-        pthread_join(data.threads[j++], NULL);
-    mutex_destroy(&data);
-    printf("Number of philosophers: %d\n", philos.num_of_philosophers);
+	i = 0;
+	if (argc < 5 || argc > 6)
+		error_message("[Argument Count ERROR]\n", 1);
+	while (++i < argc)
+	{
+		num = ft_atoi(argv[i]);
+		if (i == 1 && (num < 1 || num > PHILO_MAX_COUNT))
+			error_message("[Argument ERROR]\n", 1);
+		else if (i == 5 && (num < 0 || num > INT_MAX))
+			error_message("[Argument ERROR]\n", 1);
+		else if (i != 1 && i != 5 && (num < 1 || num > INT_MAX))
+			error_message("[Argument ERROR]\n", 1);
+	}
+}
+
+int	main(int argc, char **argv)
+{
+	t_philo		philos[PHILO_MAX_COUNT];
+	t_mutex		forks[PHILO_MAX_COUNT];
+	t_engine	engine;
+
+	check_args(argc, argv);
+	init_engine(&engine, philos, forks);
+	init_forks(&engine, forks, ft_atoi(argv[1]));
+	init_philos(&engine, philos, forks, argv);
+	launcher(&engine, philos[0].philo_count);
+	destroy_all(&engine, NULL, philos[0].philo_count, 0);
+	return (0);
 }
