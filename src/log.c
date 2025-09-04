@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   log.c                                              :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: moaljazz <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/04 19:17:57 by moaljazz          #+#    #+#             */
+/*   Updated: 2025/09/04 19:18:00 by moaljazz         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../include/philosophers.h"
 
 bool is_all_eat(t_philo *philos)
@@ -9,14 +21,11 @@ bool is_all_eat(t_philo *philos)
         return false;
     for (i = 0; i < philos[0].philo_count; i++)
     {
-        pthread_mutex_lock(philos->mutexes.meal_lock);
         if (philos[i].meals_eaten >= philos[i].must_eat)
             finished++;
-        pthread_mutex_unlock(philos->mutexes.meal_lock);
     }
     if (finished == philos[0].philo_count)
     {
-        pthread_mutex_lock(philos->mutexes.write_lock);
         return true;
     }
     return false;
@@ -36,7 +45,6 @@ void *observer(void *ptr)
             {
                 pthread_mutex_unlock(philos->mutexes.meal_lock);
                 print_action(&philos[i], RED" died"RESET);
-                pthread_mutex_lock(philos->mutexes.write_lock);
                 return NULL;
             }
             pthread_mutex_unlock(philos->mutexes.meal_lock);
@@ -54,16 +62,14 @@ void philo_routine(t_philo *philo)
     pthread_mutex_lock(philo->mutexes.right_fork);
     print_action(philo, " has taken a fork");
 
-    pthread_mutex_lock(philo->mutexes.meal_lock);
     print_action(philo, " is eating");
     philo->times.last_meal = get_current_time();
     philo->meals_eaten++;
-    pthread_mutex_unlock(philo->mutexes.meal_lock);
 
     ft_usleep(philo->times.eat);
 
-    pthread_mutex_unlock(philo->mutexes.left_fork);
     pthread_mutex_unlock(philo->mutexes.right_fork);
+    pthread_mutex_unlock(philo->mutexes.left_fork);
 
     print_action(philo, " is sleeping");
     ft_usleep(philo->times.sleep);

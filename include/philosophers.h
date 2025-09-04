@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   philosophers.h                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: moaljazz <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/09/04 19:15:04 by moaljazz          #+#    #+#             */
+/*   Updated: 2025/09/04 19:17:25 by moaljazz         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef PHILOSOPHERS_H
 #define PHILOSOPHERS_H
 
@@ -43,17 +55,17 @@ typedef struct s_philo
 	int			id;
 	t_times		times;
 	t_mutexes	mutexes;
-	int			must_eat;
+	_Atomic int			must_eat;
 	t_id		thread_id;
-	int			meals_eaten;
-	int			philo_count;
+	_Atomic int			meals_eaten;
+	_Atomic int			philo_count;
 }	t_philo;
 
 typedef struct s_engine
 {
 	t_mutex	*forks;
 	t_philo	*philos;
-	t_mutex	meal_lock;
+	  t_mutex	meal_lock;
 	t_mutex	write_lock;
 }	t_engine;
 
