@@ -11,46 +11,81 @@
 /* ************************************************************************** */
 
 #include "../include/philosophers.h"
-void	error_message(char *text, int signal)
+
+static void	eat_sleep_routine(t_philo *philo)
 {
-	if (text)
-		write(2, text, ft_strlen(text) + 1);
-	exit(signal);
+	pthread_mutex_lock(&philo->table->fork_locks[philo->fork[0]]);
+	write_status(philo, false, GOT_FORK_1);
+	pthread_mutex_lock(&philo->table->fork_locks[philo->fork[1]]);
+	write_status(philo, false, GOT_FORK_2);
+	write_status(philo, false, EATING);
+	pthread_mutex_lock(&philo->meal_time_lock);
+	philo->last_meal = get_time_in_ms();
+	pthread_mutex_unlock(&philo->meal_time_lock);
+	philo_sleep(philo->table, philo->table->time_to_eat);
+	if (has_simulation_stopped(philo->table) == false)
+	{
+		pthread_mutex_lock(&philo->meal_time_lock);
+		philo->times_ate += 1;
+		pthread_mutex_unlock(&philo->meal_time_lock);
+	}
+	write_status(philo, false, SLEEPING);
+	pthread_mutex_unlock(&philo->table->fork_locks[philo->fork[1]]);
+	pthread_mutex_unlock(&philo->table->fork_locks[philo->fork[0]]);
+	philo_sleep(philo->table, philo->table->time_to_sleep);
 }
 
-void	destroy_all(t_engine *engine, char *str, int count, int signal)
+static void	think_routine(t_philo *philo, bool silent)
 {
-	while (--count >= 0)
-		pthread_mutex_destroy(&engine->forks[count]);
-	pthread_mutex_destroy(&engine->write_lock);
-	pthread_mutex_destroy(&engine->meal_lock);
-	error_message(str, signal);
+	time_t	time_to_think;
+
+	pthread_mutex_lock(&philo->meal_time_lock);
+	time_to_think = (philo->table->time_to_die
+			- (get_time_in_ms() - philo->last_meal)
+			- philo->table->time_to_eat) / 2;
+	pthread_mutex_unlock(&philo->meal_time_lock);
+	if (time_to_think < 0)
+		time_to_think = 0;
+	if (time_to_think == 0 && silent == true)
+		time_to_think = 1;
+	if (time_to_think > 600)
+		time_to_think = 200;
+	if (silent == false)
+		write_status(philo, false, THINKING);
+	philo_sleep(philo->table, time_to_think);
 }
 
-void	print_action(t_philo *philo, char *action)
+static void	*lone_philo_routine(t_philo *philo)
 {
-	size_t	time;
-
-	pthread_mutex_lock(philo->mutexes.write_lock);
-	time = get_current_time() - philo->times.born_time;
-	printf(GREEN"%ld"RESET" %d%s\n", time, philo->id, action);
-	pthread_mutex_unlock(philo->mutexes.write_lock);
+	pthread_mutex_lock(&philo->table->fork_locks[philo->fork[0]]);
+	write_status(philo, false, GOT_FORK_1);
+	philo_sleep(philo->table, philo->table->time_to_die);
+	write_status(philo, false, DIED);
+	pthread_mutex_unlock(&philo->table->fork_locks[philo->fork[0]]);
+	return (NULL);
 }
 
-size_t	get_current_time(void)
+void	*philosopher(void *data)
 {
-	t_timeval	time;
+	t_philo	*philo;
 
-	if (gettimeofday(&time, NULL) == -1)
-		error_message("[gettimeofday ERROR]\n", 1);
-	return (time.tv_sec * 1000 + time.tv_usec / 1000);
-}
-
-void	ft_usleep(size_t mls)
-{
-	size_t	start;
-
-	start = get_current_time();
-	while (get_current_time() - start < mls)
-		usleep(500);
+	philo = (t_philo *)data;
+	if (philo->table->must_eat_count == 0)
+		return (NULL);
+	pthread_mutex_lock(&philo->meal_time_lock);
+	philo->last_meal = philo->table->start_time;
+	pthread_mutex_unlock(&philo->meal_time_lock);
+	sim_start_delay(philo->table->start_time);
+	if (philo->table->time_to_die == 0)
+		return (NULL);
+	if (philo->table->nb_philos == 1)
+		return (lone_philo_routine(philo));
+	else if (philo->id % 2)
+		think_routine(philo, true);
+	while (has_simulation_stopped(philo->table) == false)
+	{
+		eat_sleep_routine(philo);
+		think_routine(philo, false);
+	}
+	return (NULL);
 }

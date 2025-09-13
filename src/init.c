@@ -12,58 +12,91 @@
 
 #include "../include/philosophers.h"
 
-void	init_philos(t_engine *en, t_philo *philos, t_mutex *forks, char **argv)
+static pthread_mutex_t	*init_forks(t_table *table)
 {
-	int	i;
-	int	philo_count;
+	pthread_mutex_t	*forks;
+	unsigned int	i;
 
-	if (!en || !philos || !forks || !argv)
-		return;
-
-	philo_count = ft_atoi(argv[1]);
-	i = -1;
-	while (++i < philo_count)
+	forks = malloc(sizeof(pthread_mutex_t) * table->nb_philos);
+	if (!forks)
+		return (error_null(STR_ERR_MALLOC, NULL, 0));
+	i = 0;
+	while (i < table->nb_philos)
 	{
-		philos[i] = (t_philo){0}; // Zero initialize structure
-		philos[i].id = i + 1;
-		philos[i].times.die = ft_atoi(argv[2]);
-		philos[i].times.eat = ft_atoi(argv[3]);
-		philos[i].times.sleep = ft_atoi(argv[4]);
-		philos[i].times.last_meal = get_current_time();
-		philos[i].times.born_time = get_current_time();
-		philos[i].must_eat = argv[5] ? ft_atoi(argv[5]) : -1;
-		philos[i].philo_count = philo_count;
+		if (pthread_mutex_init(&forks[i], 0) != 0)
+			return (error_null(STR_ERR_MUTEX, NULL, 0));
+		i++;
+	}
+	return (forks);
+}
 
-		// Fork assignment with boundary checking
-		philos[i].mutexes.left_fork = &forks[i];
-		philos[i].mutexes.right_fork = &forks[(i + 1) % philo_count];
-		philos[i].mutexes.write_lock = &en->write_lock;
-		philos[i].mutexes.meal_lock = &en->meal_lock;
+static void	assign_forks(t_philo *philo)
+{
+	philo->fork[0] = philo->id;
+	philo->fork[1] = (philo->id + 1) % philo->table->nb_philos;
+	if (philo->id % 2)
+	{
+		philo->fork[0] = (philo->id + 1) % philo->table->nb_philos;
+		philo->fork[1] = philo->id;
 	}
 }
 
-void	init_forks(t_engine *engine, t_mutex *forks, int count)
+static t_philo	**init_philosophers(t_table *table)
 {
-	int	i;
+	t_philo			**philos;
+	unsigned int	i;
 
-	if (!engine || !forks || count <= 0)
-		return;
-
-	for (i = 0; i < count; i++)
+	philos = malloc(sizeof(t_philo) * table->nb_philos);
+	if (!philos)
+		return (error_null(STR_ERR_MALLOC, NULL, 0));
+	i = 0;
+	while (i < table->nb_philos)
 	{
-		if (pthread_mutex_init(&forks[i], NULL) != 0)
-		{
-			destroy_all(engine, "[Mutex Init ERROR]\n", i, 1);
-			return;
-		}
+		philos[i] = malloc(sizeof(t_philo) * 1);
+		if (!philos[i])
+			return (error_null(STR_ERR_MALLOC, NULL, 0));
+		if (pthread_mutex_init(&philos[i]->meal_time_lock, 0) != 0)
+			return (error_null(STR_ERR_MUTEX, NULL, 0));
+		philos[i]->table = table;
+		philos[i]->id = i;
+		philos[i]->times_ate = 0;
+		assign_forks(philos[i]);
+		i++;
 	}
+	return (philos);
 }
 
-void	init_engine(t_engine *engine, t_philo *philos, t_mutex *forks)
+static bool	init_global_mutexes(t_table *table)
 {
-	engine->forks = forks;
-	engine->philos = philos;
-	if (pthread_mutex_init(&engine->write_lock, NULL) != 0
-		|| pthread_mutex_init(&engine->meal_lock, NULL) != 0)
-		destroy_all(engine, "[Mutex Init ERROR]\n", -1, 1);
+	table->fork_locks = init_forks(table);
+	if (!table->fork_locks)
+		return (false);
+	if (pthread_mutex_init(&table->sim_stop_lock, 0) != 0)
+		return (error_failure(STR_ERR_MUTEX, NULL, table));
+	if (pthread_mutex_init(&table->write_lock, 0) != 0)
+		return (error_failure(STR_ERR_MUTEX, NULL, table));
+	return (true);
+}
+
+t_table	*init_table(int ac, char **av, int i)
+{
+	t_table	*table;
+
+	table = malloc(sizeof(t_table) * 1);
+	if (!table)
+		return (error_null(STR_ERR_MALLOC, NULL, 0));
+	table->nb_philos = integer_atoi(av[i++]);
+	table->time_to_die = integer_atoi(av[i++]);
+	table->time_to_eat = integer_atoi(av[i++]);
+	table->time_to_sleep = integer_atoi(av[i++]);
+	table->must_eat_count = -1;
+	if (ac - 1 == 5)
+		table->must_eat_count = integer_atoi(av[i]);
+	table->philos = init_philosophers(table);
+	if (!table->philos)
+		return (NULL);
+	if (!init_global_mutexes(table))
+		return (NULL);
+	table->sim_stop = false;
+	return (table);
 }

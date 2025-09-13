@@ -11,110 +11,81 @@
 /* ************************************************************************** */
 
 #include "../include/philosophers.h"
-
-bool is_all_eat(t_philo *philos)
+static void	set_sim_stop_flag(t_table *table, bool state)
 {
-    int finished = 0;
-    int i;
-
-    if (philos[0].must_eat == -1)
-        return false;
-    for (i = 0; i < philos[0].philo_count; i++)
-    {
-        if (philos[i].meals_eaten >= philos[i].must_eat)
-            finished++;
-    }
-    if (finished == philos[0].philo_count)
-    {
-        return true;
-    }
-    return false;
+	pthread_mutex_lock(&table->sim_stop_lock);
+		table->sim_stop = state;
+	pthread_mutex_unlock(&table->sim_stop_lock);
 }
 
-void *observer(void *ptr)
+bool	has_simulation_stopped(t_table *table)
 {
-    t_philo *philos = (t_philo *)ptr;
-    int i;
+	bool	r;
 
-    while (1)
-    {
-        for (i = 0; i < philos[0].philo_count; i++)
-        {
-            pthread_mutex_lock(philos->mutexes.meal_lock);
-            if (get_current_time() - philos[i].times.last_meal > philos[i].times.die)
-            {
-                pthread_mutex_unlock(philos->mutexes.meal_lock);
-                print_action(&philos[i], RED" died"RESET);
-                return NULL;
-            }
-            pthread_mutex_unlock(philos->mutexes.meal_lock);
-        }
-        if (is_all_eat(philos))
-            return NULL;
-    }
-    return NULL;
+	r = false;
+	pthread_mutex_lock(&table->sim_stop_lock);
+	if (table->sim_stop == true)
+		r = true;
+	pthread_mutex_unlock(&table->sim_stop_lock);
+	return (r);
 }
 
-void philo_routine(t_philo *philo)
+static bool	kill_philo(t_philo *philo)
 {
-    pthread_mutex_lock(philo->mutexes.left_fork);
-    print_action(philo, " has taken a fork");
-    pthread_mutex_lock(philo->mutexes.right_fork);
-    print_action(philo, " has taken a fork");
+	time_t	time;
 
-    print_action(philo, " is eating");
-    philo->times.last_meal = get_current_time();
-    philo->meals_eaten++;
-
-    ft_usleep(philo->times.eat);
-
-    pthread_mutex_unlock(philo->mutexes.right_fork);
-    pthread_mutex_unlock(philo->mutexes.left_fork);
-
-    print_action(philo, " is sleeping");
-    ft_usleep(philo->times.sleep);
-
-    print_action(philo, " is thinking");
+	time = get_time_in_ms();
+	if ((time - philo->last_meal) >= philo->table->time_to_die)
+	{
+		set_sim_stop_flag(philo->table, true);
+		write_status(philo, true, DIED);
+		pthread_mutex_unlock(&philo->meal_time_lock);
+		return (true);
+	}
+	return (false);
 }
 
-void *start_simulation(void *ptr)
+static bool	end_condition_reached(t_table *table)
 {
-    t_philo *philo = (t_philo *)ptr;
+	unsigned int	i;
+	bool			all_ate_enough;
 
-    if (philo->id % 2 == 0)
-        ft_usleep(1);
-
-    pthread_mutex_lock(philo->mutexes.meal_lock);
-    philo->times.born_time = get_current_time();
-    philo->times.last_meal = get_current_time();
-    pthread_mutex_unlock(philo->mutexes.meal_lock);
-
-    while (1)
-        philo_routine(philo);
-
-    return NULL;
+	all_ate_enough = true;
+	i = 0;
+	while (i < table->nb_philos)
+	{
+		pthread_mutex_lock(&table->philos[i]->meal_time_lock);
+		if (kill_philo(table->philos[i]))
+			return (true);
+		if (table->must_eat_count != -1)
+			if (table->philos[i]->times_ate
+				< (unsigned int)table->must_eat_count)
+				all_ate_enough = false;
+		pthread_mutex_unlock(&table->philos[i]->meal_time_lock);
+		i++;
+	}
+	if (table->must_eat_count != -1 && all_ate_enough == true)
+	{
+		set_sim_stop_flag(table, true);
+		return (true);
+	}
+	return (false);
 }
 
-void launcher(t_engine *engine, int count)
+void	*grim_reaper(void *data)
 {
-    t_id observer_id;
-    int i;
+	t_table			*table;
 
-    if (pthread_create(&observer_id, NULL, observer, engine->philos) != 0)
-        destroy_all(engine, "[Thread Creation ERROR]\n", count, 1);
-
-    for (i = 0; i < count; i++)
-    {
-        if (pthread_create(&engine->philos[i].thread_id, NULL, start_simulation, &engine->philos[i]) != 0)
-            destroy_all(engine, "[Thread Creation ERROR]\n", count, 1);
-    }
-
-    if (pthread_join(observer_id, NULL) != 0)
-        destroy_all(engine, "[Thread Join ERROR]\n", count, 1);
-
-    for (i = 0; i < count; i++)
-    {
-        if (pthread_detach(engine->philos[i].thread_id) != 0)
-            destroy_all(engine, "[Thread Detach ERROR]\n", count, 1);
-    }
+	table = (t_table *)data;
+	if (table->must_eat_count == 0)
+		return (NULL);
+	set_sim_stop_flag(table, false);
+	sim_start_delay(table->start_time);
+	while (true)
+	{
+		if (end_condition_reached(table) == true)
+			return (NULL);
+		usleep(1000);
+	}
+	return (NULL);
 }

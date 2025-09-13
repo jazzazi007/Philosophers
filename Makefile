@@ -1,11 +1,11 @@
 CC = cc
-CFALGS = -Wall -Wextra -Werror -fsanitize=thread
-SRCS = src/philosophers.c src/ft_atoi.c src/init.c src/log.c src/get_time.c src/utils.c
+CFALGS = -Wall -Wextra -Werror 
+SRCS = src/philosophers.c src/ft_atoi.c src/init.c src/log.c src/get_time.c src/utils.c src/exit.c
 OBJS = $(SRCS:.c=.o)
 NAME = philo
 all: $(NAME)
 $(NAME): $(OBJS)
-	$(CC) $(CFALGS) $(OBJS) -o $(NAME) -lpthread
+	$(CC) $(CFALGS) $(OBJS) -o $(NAME) 
 %.o: %.c
 	$(CC) $(CFALGS) -c $< -o $@
 clean:
