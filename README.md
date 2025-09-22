@@ -11,7 +11,6 @@ A solution to the classic dining philosophers problem using threads and mutexes.
 
 ## 🛠️ Installation
 ```bash
-git clone <repository-url>
 cd Philosophers
 make
 ```
