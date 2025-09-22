@@ -12,35 +12,33 @@
 
 #include "../include/philosophers.h"
 
-void	print_status_debug(t_philo *philo, char *color, char *str,
-		t_status status)
+void	print_status_debug(t_philo *philo, char *str, t_status status)
 {
 	long	timestamp;
 
 	timestamp = get_time_ms() - philo->table->start_time;
 	if (status == GOT_FORK_1)
-		printf("[%10ld]\t%s%03d\t%s\e[0m: fork [%d]\n", timestamp, color,
-			philo->id + 1, str, philo->fork[0]);
+		printf("[%10ld]\t%03d\t%s: fork [%d]\n", timestamp, philo->id + 1, str,
+			philo->fork[0]);
 	else if (status == GOT_FORK_2)
-		printf("[%10ld]\t%s%03d\t%s\e[0m: fork [%d]\n", timestamp, color,
-			philo->id + 1, str, philo->fork[1]);
+		printf("[%10ld]\t%03d\t%s: fork [%d]\n", timestamp, philo->id + 1, str,
+			philo->fork[1]);
 	else
-		printf("[%10ld]\t%s%03d\t%s\e[0m\n", timestamp, color, philo->id + 1,
-			str);
+		printf("[%10ld]\t%03d\t%s\n", timestamp, philo->id + 1, str);
 }
 
 void	write_status_debug(t_philo *philo, t_status status)
 {
 	if (status == DIED)
-		print_status_debug(philo, RED, "died", status);
+		print_status_debug(philo, "died", status);
 	else if (status == EATING)
-		print_status_debug(philo, GREEN, "is eating", status);
+		print_status_debug(philo, "is eating", status);
 	else if (status == SLEEPING)
-		print_status_debug(philo, CYAN, "is sleeping", status);
+		print_status_debug(philo, "is sleeping", status);
 	else if (status == THINKING)
-		print_status_debug(philo, CYAN, "is thinking", status);
+		print_status_debug(philo, "is thinking", status);
 	else if (status == GOT_FORK_1 || status == GOT_FORK_2)
-		print_status_debug(philo, PURPLE, "has taken a fork", status);
+		print_status_debug(philo, "has taken a fork", status);
 }
 
 void	print_status(t_philo *philo, char *str)
@@ -63,16 +61,7 @@ void	write_sts(t_philo *philo, bool reaper_report, t_status status)
 		pthread_mutex_unlock(&philo->table->write_lock);
 		return ;
 	}
-	if (status == DIED)
-		print_status(philo, "died");
-	else if (status == EATING)
-		print_status(philo, "is eating");
-	else if (status == SLEEPING)
-		print_status(philo, "is sleeping");
-	else if (status == THINKING)
-		print_status(philo, "is thinking");
-	else if (status == GOT_FORK_1 || status == GOT_FORK_2)
-		print_status(philo, "has taken a fork");
+	write_print_state(status, philo);
 	pthread_mutex_unlock(&philo->table->write_lock);
 }
 

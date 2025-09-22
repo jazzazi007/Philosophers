@@ -28,26 +28,20 @@
 #  define DEBUG_FORMATTING 0
 # endif
 
-# define NC "\e[0m"
-# define RED "\e[31m"
-# define GREEN "\e[32m"
-# define PURPLE "\e[35m"
-# define CYAN "\e[36m"
-
-# define STR_PROG_NAME "philo:"
-# define STR_USAGE \
+# define PHILO_PROG_NAME "philo:"
+# define PHILO_USAGE \
 	"%s usage: ./philo <number_of_philosophers> \
 <time_to_die> <time_to_eat> <time_to_sleep> \
 [number_of_times_each_philosopher_must_eat]\n"
-# define STR_ERR_INPUT_DIGIT \
+# define PHILO_ERR_INPUT_DIGIT \
 	"%s invalid input: %s: \
 not a valid unsigned integer between 0 and 2147483647.\n"
-# define STR_ERR_INPUT_POFLOW \
+# define PHILO_ERR_INPUT_POFLOW \
 	"%s invalid input: \
 there must be between 1 and %s philosophers.\n"
-# define STR_ERR_THREAD "%s error: Could not create thread.\n"
-# define STR_ERR_MALLOC "%s error: Could not allocate memory.\n"
-# define STR_ERR_MUTEX "%s error: Could not create mutex.\n"
+# define PHILO_ERR_THREAD "%s error: Could not create thread.\n"
+# define PHILO_ERR_MALLOC "%s error: Could not allocate memory.\n"
+# define PHILO_ERR_MUTEX "%s error: Could not create mutex.\n"
 
 typedef struct s_philo	t_philo;
 
@@ -96,6 +90,9 @@ time_t					get_time_ms(void);
 void					philo_sleep(t_table *table, time_t sleep_time);
 void					start_delay(time_t start_time);
 void					write_sts(t_philo *philo, bool reaper, t_status status);
+void					philo_assign(t_philo **philos, t_table *table,
+							unsigned int i);
+
 void					write_out(t_table *table);
 void					*err_null(char *str, char *details, t_table *table);
 int						msg(char *str, char *detail, int exit_no);
@@ -104,5 +101,8 @@ bool					is_simulation_stopped(t_table *table);
 int						err_fail(char *str, char *details, t_table *table);
 void					*free_table(t_table *table);
 void					destroy_mutx(t_table *table);
+void					assign_forks(t_philo *philo);
+void					write_print_state(t_status status, t_philo *philo);
+void					print_status(t_philo *philo, char *str);
 
 #endif

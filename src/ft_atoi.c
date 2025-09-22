@@ -12,6 +12,15 @@
 
 #include "../include/philosophers.h"
 
+void	philo_assign(t_philo **philos, t_table *table, unsigned int i)
+{
+	philos[i]->table = table;
+	philos[i]->id = i;
+	philos[i]->times_ate = 0;
+	philos[i]->last_meal = get_time_ms();
+	assign_forks(philos[i]);
+}
+
 bool	is_digits_only(const char *str)
 {
 	int	i;
@@ -56,12 +65,12 @@ bool	valid_input(int ac, char **av)
 	while (i < ac)
 	{
 		if (!is_digits_only(av[i]))
-			return (msg(STR_ERR_INPUT_DIGIT, av[i], false));
+			return (msg(PHILO_ERR_INPUT_DIGIT, av[i], false));
 		nb = ft_atoi(av[i]);
 		if (i == 1 && (nb <= 0 || nb > MAX_PHILOS))
-			return (msg(STR_ERR_INPUT_POFLOW, STR_MAX_PHILOS, false));
+			return (msg(PHILO_ERR_INPUT_POFLOW, STR_MAX_PHILOS, false));
 		if (i != 1 && nb == -1)
-			return (msg(STR_ERR_INPUT_DIGIT, av[i], false));
+			return (msg(PHILO_ERR_INPUT_DIGIT, av[i], false));
 		i++;
 	}
 	return (true);
